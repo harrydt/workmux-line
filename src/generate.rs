@@ -10,25 +10,37 @@ pub fn generate(cfg: &Config) -> String {
     let c = &cfg.colors;
     let g = cfg.separators().glyphs(cfg.nerdfont);
     let agents = &cfg.components.agents;
-    let left = left(&styled(cfg, cfg.left(), &g, false), c, &g);
-    let right = right(&styled(cfg, cfg.right(), &g, true), c, &g);
-    [
+    // Always published: the indicator unstyled, empty when nothing is pending.
+    let module = components::render(Component::Agents, &g);
+    let mut options = vec![
         ("@wmux_line_waiting", agents.waiting.clone()),
         ("@wmux_line_done", agents.done.clone()),
-        ("status-style", format!("bg={},fg={}", c.bar_bg, c.bar_fg)),
-        ("window-status-style", format!("fg={}", c.muted)),
-        (
-            "window-status-current-style",
-            format!("fg={},bold", c.accent),
-        ),
-        ("status-left", left),
-        ("status-left-length", SECTION_LENGTH.to_string()),
-        ("status-right", right),
-        ("status-right-length", SECTION_LENGTH.to_string()),
-    ]
-    .iter()
-    .map(|(option, value)| format!("set -g {option} {}\n", quote(value)))
-    .collect()
+        ("@wmux_line_agents", when(&module.visible, &module.content)),
+    ];
+    if cfg.statusline {
+        options.extend([
+            ("status-style", format!("bg={},fg={}", c.bar_bg, c.bar_fg)),
+            ("window-status-style", format!("fg={}", c.muted)),
+            (
+                "window-status-current-style",
+                format!("fg={},bold", c.accent),
+            ),
+            (
+                "status-left",
+                left(&styled(cfg, cfg.left(), &g, false), c, &g),
+            ),
+            ("status-left-length", SECTION_LENGTH.to_string()),
+            (
+                "status-right",
+                right(&styled(cfg, cfg.right(), &g, true), c, &g),
+            ),
+            ("status-right-length", SECTION_LENGTH.to_string()),
+        ]);
+    }
+    options
+        .iter()
+        .map(|(option, value)| format!("set -g {option} {}\n", quote(value)))
+        .collect()
 }
 
 struct Styled {
@@ -179,7 +191,24 @@ mod tests {
         let out = generate(&Config::default());
         assert_eq!(option(&out, "@wmux_line_waiting"), "💬");
         assert_eq!(option(&out, "status-style"), "bg=default,fg=default");
-        assert_eq!(out.lines().count(), 9);
+        assert_eq!(out.lines().count(), 10);
+    }
+
+    #[test]
+    fn module_only_leaves_the_status_line_alone() {
+        let out = generate(&Config {
+            statusline: false,
+            ..Config::default()
+        });
+        let options: Vec<_> = out.lines().map(|l| l.split(' ').nth(2).unwrap()).collect();
+        assert_eq!(
+            options,
+            ["@wmux_line_waiting", "@wmux_line_done", "@wmux_line_agents"]
+        );
+        assert!(
+            !option(&out, "@wmux_line_agents").contains("#["),
+            "module is unstyled"
+        );
     }
 
     #[test]

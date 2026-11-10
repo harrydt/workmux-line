@@ -10,6 +10,9 @@ pub struct Config {
     pub preset: Preset,
     /// Mirrors workmux's own `nerdfont` setting; off means Unicode fallbacks.
     pub nerdfont: bool,
+    /// Off: leave the status line alone and only publish `@wmux_line_agents`
+    /// for embedding in your own (`#{E:@wmux_line_agents}`).
+    pub statusline: bool,
     /// Overrides the preset's separator style.
     pub separators: Option<Separators>,
     pub sections: Sections,
@@ -22,6 +25,7 @@ impl Default for Config {
         Self {
             preset: Preset::Developer,
             nerdfont: true,
+            statusline: true,
             separators: None,
             sections: Sections::default(),
             components: Components::default(),

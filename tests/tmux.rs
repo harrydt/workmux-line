@@ -393,3 +393,23 @@ fn apply_without_a_server_says_so() {
     let err = String::from_utf8_lossy(&out.stderr);
     assert!(err.starts_with("wmux-line: tmux: "), "{err}");
 }
+
+#[test]
+fn module_embeds_in_a_foreign_status_line() {
+    let mut tmux = start!("module", "statusline = false\n");
+    tmux.session("alpha");
+    tmux.session("beta");
+    let theirs = "#[fg=red]THEIRS #{E:@wmux_line_agents}| %%";
+    run(&tmux.dir, &["set", "-g", "status-right", theirs]);
+    assert_eq!(
+        tmux.eval("#{status-left}"),
+        "[#{session_name}] ",
+        "tmux default kept"
+    );
+
+    assert_eq!(tmux.right(), "#[fg=red]THEIRS | %");
+    tmux.status("alpha", Some("💬"));
+    assert_eq!(tmux.right(), "#[fg=red]THEIRS 💬 alpha| %");
+    tmux.status("beta", Some("✅"));
+    assert_eq!(tmux.right(), "#[fg=red]THEIRS 💬 1 ✅ 1| %");
+}

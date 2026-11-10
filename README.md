@@ -71,7 +71,8 @@ and its own `@wmux_line_*`. To go back, reload your tmux config.
 **Things to know**
 
 - Plugins that inject into `status-right` (e.g. tmux-prefix-highlight's
-  `#{prefix_highlight}`) lose their slot, because wmux-line owns that option.
+  `#{prefix_highlight}`) lose their slot, because wmux-line owns that option. To
+  keep your own status line, use [just the indicator](#use-just-the-indicator).
 - workmux's per-window formats (the 🤖/💬/✅ in the window list) are left as they are.
 - If you changed workmux's `status_icons`, set the same `waiting`/`done` icons in
   `[components.agents]`, or the indicator won't recognise them.
@@ -100,6 +101,28 @@ The full schema is in [docs/mvp.md](docs/mvp.md#example-config-the-whole-schema-
 Run `wmux-line print` to see the exact tmux commands `apply` would run. A config
 error is reported (with the line and the valid choices), and the status line is
 left unchanged.
+
+## Use just the indicator
+
+If you'd rather keep your own status line (hand-written, catppuccin/tmux,
+oh-my-tmux, …), turn the full line off:
+
+```toml
+statusline = false
+```
+
+`apply` then sets only `@wmux_line_*` options and leaves `status-left`,
+`status-right` and the styles alone. Embed the indicator wherever you like. It's
+unstyled text, and empty when nothing needs you:
+
+```tmux
+set -g status-right '#{E:@wmux_line_agents} %H:%M'
+# or with padding that disappears with it:
+set -g status-right '#{?#{E:@wmux_line_agents},#[fg=#cba6f7] #{E:@wmux_line_agents} #[default],}%H:%M'
+```
+
+Run `wmux-line apply` before (or after) your status settings. The order doesn't
+matter, because the option is only read when tmux draws the line.
 
 ## Requirements
 
