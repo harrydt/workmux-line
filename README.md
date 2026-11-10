@@ -52,21 +52,30 @@ wmux-line apply
 ```
 
 To keep it, add this to your tmux config (`~/.tmux.conf` or
-`~/.config/tmux/tmux.conf`). Put it **at the bottom**, after your own `status-*`
-settings and after the TPM `run-shell` line, so nothing overrides it:
+`~/.config/tmux/tmux.conf`). Put it **after** your own `status-*` settings, but
+**before** the TPM `run-shell` line:
 
 ```tmux
 run-shell 'wmux-line apply'
-bind R run-shell 'wmux-line apply' \; display 'wmux-line reloaded'
 
 # Jump to agents with workmux's own navigation
 bind l   run-shell 'workmux last-done'    # next agent that needs you
 bind Tab run-shell 'workmux last-agent'   # back to the previous agent
+
+# TPM last, as usual
+run-shell '~/.tmux/plugins/tpm/tpm'
 ```
+
+Some plugins hook into `status-right` when TPM loads them. tmux-continuum, for
+example, prepends its auto-save job there, so wmux-line has to set it first. For
+the same reason, re-apply by **reloading your whole tmux config**
+(`tmux source-file <your tmux.conf>`) after changing wmux-line's config. A bare
+`wmux-line apply` would drop those hooks until the next reload.
 
 wmux-line sets these tmux options: `status-left`, `status-right` (and their
 `-length`), `status-style`, `window-status-style`, `window-status-current-style`,
-and its own `@wmux_line_*`. To go back, reload your tmux config.
+and its own `@wmux_line_*`. To go back, remove the line and reload your tmux
+config.
 
 **Things to know**
 
