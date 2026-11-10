@@ -154,6 +154,19 @@ impl Tmux {
     fn right(&mut self) -> String {
         self.eval("#{T:status-right}")
     }
+
+    /// `wmux-line apply` with `config`, finding this server through `$TMUX`
+    /// the way it does under `run-shell`.
+    fn apply(&self, config: &str) -> std::process::Output {
+        std::fs::write(self.dir.join("wmux-line/config.toml"), config).unwrap();
+        let socket = self.dir.join("sock");
+        Command::new(env!("CARGO_BIN_EXE_wmux-line"))
+            .arg("apply")
+            .env("XDG_CONFIG_HOME", &self.dir)
+            .env("TMUX", format!("{},0,0", socket.display()))
+            .output()
+            .unwrap()
+    }
 }
 
 impl Drop for Tmux {
@@ -336,4 +349,47 @@ fn branch_shows_in_git_repos_only() {
     assert!(init.status.success());
     let left = tmux.eval_until("#{T:status-left}", |s| s.contains("feat-x"));
     assert_eq!(text(&left), "\u{e0a0} feat-x \u{e0b4}");
+}
+
+#[test]
+fn apply_updates_the_running_server() {
+    let mut tmux = start!("apply", "[sections]\nleft = []\nright = []\n");
+    assert_eq!(tmux.left(), "");
+
+    let out = tmux.apply("[sections]\nleft = [\"session\"]\nright = []\n");
+    assert!(
+        out.status.success(),
+        "{}",
+        String::from_utf8_lossy(&out.stderr)
+    );
+    assert!(text(&tmux.left()).contains("main"), "{}", tmux.left());
+}
+
+#[test]
+fn apply_with_broken_config_leaves_tmux_untouched() {
+    let mut tmux = start!(
+        "apply-broken",
+        "[sections]\nleft = [\"session\"]\nright = []\n"
+    );
+    let before = tmux.left();
+
+    let out = tmux.apply("[sections]\nleft = [\"battery\"]\n");
+    assert!(!out.status.success());
+    let err = String::from_utf8_lossy(&out.stderr);
+    assert!(err.contains("battery"), "{err}");
+    assert_eq!(tmux.left(), before);
+}
+
+#[test]
+fn apply_without_a_server_says_so() {
+    let dir = std::env::temp_dir().join(format!("wmux-line-test-{}-noserver", std::process::id()));
+    let out = Command::new(env!("CARGO_BIN_EXE_wmux-line"))
+        .arg("apply")
+        .env("XDG_CONFIG_HOME", &dir) // no config: defaults
+        .env("TMUX", format!("{},0,0", dir.join("sock").display()))
+        .output()
+        .unwrap();
+    assert!(!out.status.success());
+    let err = String::from_utf8_lossy(&out.stderr);
+    assert!(err.starts_with("wmux-line: tmux: "), "{err}");
 }

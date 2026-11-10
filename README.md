@@ -3,8 +3,9 @@
 A fast, composable tmux statusline for [workmux](https://github.com/raine/workmux)
 users. Think **lualine.nvim meets workmux**.
 
-> Status: design phase. See [docs/research.md](docs/research.md),
-> [docs/architecture.md](docs/architecture.md), [docs/mvp.md](docs/mvp.md).
+> Status: pre-release, MVP milestones 1–4 done. Design notes:
+> [docs/research.md](docs/research.md), [docs/architecture.md](docs/architecture.md),
+> [docs/mvp.md](docs/mvp.md).
 
 ## Why
 
@@ -36,23 +37,51 @@ When nothing needs you, the indicator disappears.
   terminals.
 - **Good defaults.** Zero config gives you a polished line.
 
-## Proposed usage
+## Install
+
+From a checkout (no published release yet):
 
 ```sh
-cargo install wmux-line
+cargo install --path .
 ```
 
+Try it in your running tmux. `apply` loads the status line straight away:
+
+```sh
+wmux-line apply
+```
+
+To keep it, add this to your tmux config (`~/.tmux.conf` or
+`~/.config/tmux/tmux.conf`). Put it **at the bottom**, after your own `status-*`
+settings and after the TPM `run-shell` line, so nothing overrides it:
+
 ```tmux
-# ~/.tmux.conf
 run-shell 'wmux-line apply'
 bind R run-shell 'wmux-line apply' \; display 'wmux-line reloaded'
 
-# jump to agents using workmux's own navigation
-bind l   run-shell 'workmux last-done'
-bind Tab run-shell 'workmux last-agent'
+# Jump to agents with workmux's own navigation
+bind l   run-shell 'workmux last-done'    # next agent that needs you
+bind Tab run-shell 'workmux last-agent'   # back to the previous agent
 ```
 
-Optional `~/.config/wmux-line/config.toml`:
+wmux-line sets these tmux options: `status-left`, `status-right` (and their
+`-length`), `status-style`, `window-status-style`, `window-status-current-style`,
+and its own `@wmux_line_*`. To go back, reload your tmux config.
+
+**Things to know**
+
+- Plugins that inject into `status-right` (e.g. tmux-prefix-highlight's
+  `#{prefix_highlight}`) lose their slot, because wmux-line owns that option.
+- workmux's per-window formats (the 🤖/💬/✅ in the window list) are left as they are.
+- If you changed workmux's `status_icons`, set the same `waiting`/`done` icons in
+  `[components.agents]`, or the indicator won't recognise them.
+- The default `developer` preset needs a [Nerd Font](https://www.nerdfonts.com/). Set
+  `nerdfont = false` otherwise.
+
+## Configure
+
+Everything is optional. With no file, you get the `developer` preset.
+`~/.config/wmux-line/config.toml`:
 
 ```toml
 preset   = "developer"   # minimal | developer | powerline
@@ -68,7 +97,9 @@ accent = "#cba6f7"
 
 The full schema is in [docs/mvp.md](docs/mvp.md#example-config-the-whole-schema-for-the-mvp).
 
-Run `wmux-line print` to see the exact tmux options it would set.
+Run `wmux-line print` to see the exact tmux commands `apply` would run. A config
+error is reported (with the line and the valid choices), and the status line is
+left unchanged.
 
 ## Requirements
 
