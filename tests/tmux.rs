@@ -349,16 +349,6 @@ fn branch_shows_in_git_repos_only() {
     assert!(init.status.success());
     let left = tmux.eval_until("#{T:status-left}", |s| s.contains("feat-x"));
     assert_eq!(text(&left), "\u{e0a0} feat-x \u{e0b4}");
-
-    // A branch named after its worktree directory (`main/`) is what the
-    // session already says: hidden, as workmux names branches.
-    let switch = Command::new("git")
-        .args(["symbolic-ref", "HEAD", "refs/heads/main"])
-        .current_dir(&repo)
-        .output()
-        .unwrap();
-    assert!(switch.status.success());
-    assert_eq!(tmux.eval_until("#{T:status-left}", |s| s.is_empty()), "");
 }
 
 #[test]

@@ -37,22 +37,11 @@ fn always(content: &str) -> Segment {
 /// on status-interval. Both uses below share one job.
 const BRANCH_JOB: &str = "#(git -C #{q:pane_current_path} branch --show-current 2>/dev/null)";
 
-/// Hidden outside a repository and on a detached HEAD (both print nothing),
-/// and when the branch is named after the worktree directory, as workmux names
-/// it: the session already shows that name.
+/// Hidden outside a repository and on a detached HEAD (both print nothing).
 fn branch(icon: &str) -> Segment {
     Segment {
         content: format!("{icon} {BRANCH_JOB}"),
-        visible: Some(
-            [
-                "#{&&:#{!=:",
-                BRANCH_JOB,
-                ",},#{!=:",
-                BRANCH_JOB,
-                ",#{b:pane_current_path}}}",
-            ]
-            .concat(),
-        ),
+        visible: Some(["#{!=:", BRANCH_JOB, ",}"].concat()),
     }
 }
 
