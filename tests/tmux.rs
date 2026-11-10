@@ -423,7 +423,11 @@ fn mode_badge_shows_prefix_and_copy_mode() {
 
     // What pressing the prefix does: the client enters the prefix key table.
     tmux.command("switch-client -T prefix");
-    assert_eq!(text(&tmux.right()), "\u{e0b6} PREFIX");
+    assert_eq!(
+        text(&tmux.right()),
+        "\u{e0b6} \u{f11c}",
+        "keyboard icon by default"
+    );
     tmux.command("switch-client -T root");
     assert_eq!(tmux.right(), "");
 
@@ -431,4 +435,20 @@ fn mode_badge_shows_prefix_and_copy_mode() {
     assert_eq!(text(&tmux.right()), "\u{e0b6} COPY");
     tmux.command("send-keys -X -t main: cancel");
     assert_eq!(tmux.right(), "");
+}
+
+#[test]
+fn mode_labels_are_configurable() {
+    let config = "[sections]\nleft = []\nright = [\"mode\"]\n[components.mode]\nprefix = \"P,}#S\"\ncopy = \"📋\"\n";
+    let mut tmux = start!("mode-labels", config);
+
+    tmux.command("switch-client -T prefix");
+    assert_eq!(
+        text(&tmux.right()),
+        "\u{e0b6} P,}#S",
+        "verbatim, no escaping"
+    );
+    tmux.command("switch-client -T root");
+    tmux.command("copy-mode -t main:");
+    assert_eq!(text(&tmux.right()), "\u{e0b6} 📋");
 }

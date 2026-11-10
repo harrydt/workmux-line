@@ -18,7 +18,11 @@ pub fn generate(cfg: &Config) -> String {
         ("@wmux_line_agents", when(&module.visible, &module.content)),
     ];
     if cfg.statusline {
+        let mode = &cfg.components.mode;
+        let prefix = mode.prefix.clone().unwrap_or_else(|| g.prefix.into());
         options.extend([
+            ("@wmux_line_prefix", prefix),
+            ("@wmux_line_copy", mode.copy.clone()),
             ("status-style", format!("bg={},fg={}", c.bar_bg, c.bar_fg)),
             ("window-status-style", format!("fg={}", c.muted)),
             (
@@ -205,7 +209,7 @@ mod tests {
         let out = generate(&Config::default());
         assert_eq!(option(&out, "@wmux_line_waiting"), "💬");
         assert_eq!(option(&out, "status-style"), "bg=default,fg=default");
-        assert_eq!(out.lines().count(), 10);
+        assert_eq!(out.lines().count(), 12);
     }
 
     #[test]

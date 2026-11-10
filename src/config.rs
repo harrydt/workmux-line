@@ -110,7 +110,7 @@ pub struct Components {
     pub session: Width,
     pub branch: Width,
     pub agents: Agents,
-    pub mode: Width,
+    pub mode: Mode,
     pub clock: Width,
 }
 
@@ -121,7 +121,7 @@ impl Default for Components {
             session: Width::default(),
             branch: Width { min_width: 90 },
             agents: Agents::default(),
-            mode: Width::default(),
+            mode: Mode::default(),
             clock: Width { min_width: 80 },
         }
     }
@@ -165,6 +165,26 @@ impl Default for Agents {
     }
 }
 
+#[derive(Debug, Deserialize, PartialEq)]
+#[serde(default, deny_unknown_fields)]
+pub struct Mode {
+    /// Shown while the prefix is held; unset = a keyboard icon (Nerd Font or `⌨`).
+    pub prefix: Option<String>,
+    /// Shown in copy mode.
+    pub copy: String,
+    pub min_width: u16,
+}
+
+impl Default for Mode {
+    fn default() -> Self {
+        Self {
+            prefix: None,
+            copy: "COPY".into(),
+            min_width: 0,
+        }
+    }
+}
+
 /// `$XDG_CONFIG_HOME/wmux-line/config.toml`, else `~/.config/wmux-line/config.toml`.
 pub fn default_path() -> Option<PathBuf> {
     let base = std::env::var_os("XDG_CONFIG_HOME")
@@ -185,12 +205,18 @@ pub fn load(path: &Path) -> Result<Config, String> {
 
 pub fn parse(text: &str) -> Result<Config, String> {
     let cfg: Config = toml::from_str(text).map_err(|e| e.to_string())?;
-    let agents = &cfg.components.agents;
-    for (key, icon) in [("waiting", &agents.waiting), ("done", &agents.done)] {
-        // An empty icon would equal the empty status of every idle window.
-        if icon.is_empty() || icon.chars().any(char::is_control) {
+    let (agents, mode) = (&cfg.components.agents, &cfg.components.mode);
+    let labels = [
+        ("agents.waiting", Some(&agents.waiting)),
+        ("agents.done", Some(&agents.done)),
+        ("mode.prefix", mode.prefix.as_ref()),
+        ("mode.copy", Some(&mode.copy)),
+    ];
+    for (key, label) in labels {
+        // An empty agent icon would equal the empty status of every idle window.
+        if label.is_some_and(|l| l.is_empty() || l.chars().any(char::is_control)) {
             return Err(format!(
-                "components.agents.{key}: must be non-empty, without control characters"
+                "components.{key}: must be non-empty, without control characters"
             ));
         }
     }
@@ -245,6 +271,8 @@ mod tests {
         let err = parse("[components.agents]\ndone = \"\"").unwrap_err();
         assert!(err.contains("components.agents.done"), "{err}");
         assert!(parse("[components.agents]\ndone = \"a\\nb\"").is_err());
+        let err = parse("[components.mode]\nprefix = \"\"").unwrap_err();
+        assert!(err.contains("components.mode.prefix"), "{err}");
     }
 
     #[test]

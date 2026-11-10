@@ -17,7 +17,8 @@ pub fn render(component: Component, glyphs: &Glyphs) -> Segment {
             visible: Some(["#{!=:", &count(&attention()), ",0}"].concat()),
         },
         Component::Mode => Segment {
-            content: "#{?client_prefix,PREFIX,COPY}".into(),
+            // Labels via options, like the agent icons: no escaping needed.
+            content: "#{?client_prefix,#{@wmux_line_prefix},#{@wmux_line_copy}}".into(),
             visible: Some("#{||:#{client_prefix},#{==:#{pane_mode},copy-mode}}".into()),
         },
         Component::Clock => always("%H:%M"),

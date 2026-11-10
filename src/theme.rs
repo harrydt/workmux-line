@@ -76,6 +76,7 @@ pub struct Glyphs {
     pub right: &'static str,
     pub right_thin: &'static str,
     pub branch: &'static str,
+    pub prefix: &'static str,
 }
 
 impl Separators {
@@ -87,12 +88,16 @@ impl Separators {
             _ => ("", "│", "", "│"),
         };
         let branch = if nerdfont { "\u{e0a0}" } else { "⎇" };
+        // A keyboard: tmux is waiting for your next key. Text presentation on
+        // purpose; emoji ⌨️ is double-width in some terminals and shifts the line.
+        let prefix = if nerdfont { "\u{f11c}" } else { "⌨" };
         Glyphs {
             left,
             left_thin,
             right,
             right_thin,
             branch,
+            prefix,
         }
     }
 }
@@ -120,6 +125,6 @@ mod tests {
     #[test]
     fn no_nerdfont_means_plain() {
         let g = Separators::Powerline.glyphs(false);
-        assert_eq!((g.left, g.right, g.branch), ("", "", "⎇"));
+        assert_eq!((g.left, g.right, g.branch, g.prefix), ("", "", "⎇", "⌨"));
     }
 }

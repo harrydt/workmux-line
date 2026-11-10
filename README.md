@@ -81,7 +81,7 @@ config.
 
 - Plugins that inject into `status-right` lose their slot, because wmux-line owns
   that option. The built-in `mode` component replaces tmux-prefix-highlight
-  (`PREFIX` / `COPY` badge), so that plugin can go. To keep your own status line
+  (a keyboard icon while the prefix is held, `COPY` in copy mode), so that plugin can go. To keep your own status line
   instead, use [just the indicator](#use-just-the-indicator).
 - workmux's per-window formats (the 🤖/💬/✅ in the window list) are left as they are.
 - If you changed workmux's `status_icons`, set the same `waiting`/`done` icons in
