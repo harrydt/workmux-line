@@ -16,6 +16,10 @@ pub fn render(component: Component, glyphs: &Glyphs) -> Segment {
             content: agents(),
             visible: Some(["#{!=:", &count(&attention()), ",0}"].concat()),
         },
+        Component::Mode => Segment {
+            content: "#{?client_prefix,PREFIX,COPY}".into(),
+            visible: Some("#{||:#{client_prefix},#{==:#{pane_mode},copy-mode}}".into()),
+        },
         Component::Clock => always("%H:%M"),
     }
 }

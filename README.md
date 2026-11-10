@@ -70,9 +70,10 @@ and its own `@wmux_line_*`. To go back, reload your tmux config.
 
 **Things to know**
 
-- Plugins that inject into `status-right` (e.g. tmux-prefix-highlight's
-  `#{prefix_highlight}`) lose their slot, because wmux-line owns that option. To
-  keep your own status line, use [just the indicator](#use-just-the-indicator).
+- Plugins that inject into `status-right` lose their slot, because wmux-line owns
+  that option. The built-in `mode` component replaces tmux-prefix-highlight
+  (`PREFIX` / `COPY` badge), so that plugin can go. To keep your own status line
+  instead, use [just the indicator](#use-just-the-indicator).
 - workmux's per-window formats (the 🤖/💬/✅ in the window list) are left as they are.
 - If you changed workmux's `status_icons`, set the same `waiting`/`done` icons in
   `[components.agents]`, or the indicator won't recognise them.
@@ -90,7 +91,7 @@ nerdfont = true          # false: plain separators, Unicode icons
 
 [sections]
 left  = ["session", "branch"]
-right = ["agents", "clock"]
+right = ["agents", "mode", "clock"]
 
 [colors]
 accent = "#cba6f7"

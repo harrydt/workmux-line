@@ -413,3 +413,22 @@ fn module_embeds_in_a_foreign_status_line() {
     tmux.status("beta", Some("✅"));
     assert_eq!(tmux.right(), "#[fg=red]THEIRS 💬 1 ✅ 1| %");
 }
+
+#[test]
+fn mode_badge_shows_prefix_and_copy_mode() {
+    let config = "[sections]\nleft = []\nright = [\"mode\"]\n";
+    let mut tmux = start!("mode", config);
+
+    assert_eq!(tmux.right(), "", "hidden normally");
+
+    // What pressing the prefix does: the client enters the prefix key table.
+    tmux.command("switch-client -T prefix");
+    assert_eq!(text(&tmux.right()), "\u{e0b6} PREFIX");
+    tmux.command("switch-client -T root");
+    assert_eq!(tmux.right(), "");
+
+    tmux.command("copy-mode -t main:");
+    assert_eq!(text(&tmux.right()), "\u{e0b6} COPY");
+    tmux.command("send-keys -X -t main: cancel");
+    assert_eq!(tmux.right(), "");
+}

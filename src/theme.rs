@@ -13,6 +13,8 @@ pub struct Colors {
     pub a_fg: String,
     pub b_bg: String,
     pub b_fg: String,
+    /// Background of the `mode` badge (text uses `a_fg`).
+    pub mode: String,
 }
 
 /// The built-in `wmux` theme. The bar is the terminal's own background, so it
@@ -28,6 +30,7 @@ impl Default for Colors {
             a_fg: "#1e1e2e".into(),
             b_bg: "#45475a".into(),
             b_fg: "#cdd6f4".into(),
+            mode: "#f9e2af".into(),
         }
     }
 }
@@ -45,6 +48,7 @@ impl Colors {
             ("a_fg", &self.a_fg),
             ("b_bg", &self.b_bg),
             ("b_fg", &self.b_fg),
+            ("mode", &self.mode),
         ] {
             if value.is_empty() || !value.chars().all(|c| c.is_ascii_alphanumeric() || c == '#') {
                 return Err(format!(

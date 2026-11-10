@@ -50,13 +50,27 @@ struct Styled {
 }
 
 /// Colours by distance from the outer edge (lualine's a, b, then the bar),
-/// and `min_width` folded into each segment's visibility.
+/// and `min_width` folded into each segment's visibility. `mode` has its own
+/// colour and takes no tier, so its (rare) appearance doesn't recolour the rest.
 fn styled(cfg: &Config, section: &[Component], g: &Glyphs, from_end: bool) -> Vec<Styled> {
     let c = &cfg.colors;
+    let mut tiers = vec![None; section.len()];
+    let mut next = 0;
+    let order: Vec<usize> = if from_end {
+        (0..section.len()).rev().collect()
+    } else {
+        (0..section.len()).collect()
+    };
+    for i in order {
+        if section[i] != Component::Mode {
+            tiers[i] = Some(next);
+            next += 1;
+        }
+    }
     section
         .iter()
-        .enumerate()
-        .map(|(i, &component)| {
+        .zip(tiers)
+        .map(|(&component, tier)| {
             let mut seg = components::render(component, g);
             let min = cfg.components.min_width(component);
             if min > 0 {
@@ -66,11 +80,11 @@ fn styled(cfg: &Config, section: &[Component], g: &Glyphs, from_end: bool) -> Ve
                     None => wide,
                 });
             }
-            let tier = if from_end { section.len() - 1 - i } else { i };
             let (fg, bg) = match tier {
-                0 => (&c.a_fg, &c.a_bg),
-                1 => (&c.b_fg, &c.b_bg),
-                _ => (&c.bar_fg, &c.bar_bg),
+                None => (&c.a_fg, &c.mode),
+                Some(0) => (&c.a_fg, &c.a_bg),
+                Some(1) => (&c.b_fg, &c.b_bg),
+                Some(_) => (&c.bar_fg, &c.bar_bg),
             };
             Styled {
                 seg,
@@ -227,6 +241,19 @@ mod tests {
              #[fg=#cdd6f4]#[bg=#45475a] #S #[fg=#45475a]#[bg=default]\u{e0b4}\
              #[default] "
         );
+    }
+
+    #[test]
+    fn mode_takes_no_tier() {
+        let cfg = Config::default();
+        let g = cfg.separators().glyphs(true);
+        let right = [Component::Agents, Component::Mode, Component::Clock];
+        let colors: Vec<_> = styled(&cfg, &right, &g, true)
+            .into_iter()
+            .map(|s| s.bg)
+            .collect();
+        let c = &cfg.colors;
+        assert_eq!(colors, [&*c.b_bg, &c.mode, &c.a_bg], "agents keeps tier b");
     }
 
     #[test]

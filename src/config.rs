@@ -69,8 +69,10 @@ impl Preset {
 
     fn right(self) -> &'static [Component] {
         match self {
-            Self::Minimal => &[Component::Agents],
-            Self::Developer | Self::Powerline => &[Component::Agents, Component::Clock],
+            Self::Minimal => &[Component::Agents, Component::Mode],
+            Self::Developer | Self::Powerline => {
+                &[Component::Agents, Component::Mode, Component::Clock]
+            }
         }
     }
 
@@ -97,6 +99,8 @@ pub enum Component {
     Session,
     Branch,
     Agents,
+    /// Prefix held / copy mode badge.
+    Mode,
     Clock,
 }
 
@@ -106,6 +110,7 @@ pub struct Components {
     pub session: Width,
     pub branch: Width,
     pub agents: Agents,
+    pub mode: Width,
     pub clock: Width,
 }
 
@@ -116,6 +121,7 @@ impl Default for Components {
             session: Width::default(),
             branch: Width { min_width: 90 },
             agents: Agents::default(),
+            mode: Width::default(),
             clock: Width { min_width: 80 },
         }
     }
@@ -128,6 +134,7 @@ impl Components {
             Component::Session => self.session.min_width,
             Component::Branch => self.branch.min_width,
             Component::Agents => self.agents.min_width,
+            Component::Mode => self.mode.min_width,
             Component::Clock => self.clock.min_width,
         }
     }
@@ -204,7 +211,7 @@ mod tests {
     fn preset_supplies_layout_and_separators() {
         let cfg = parse("preset = \"minimal\"").unwrap();
         assert_eq!(cfg.left(), [Component::Session]);
-        assert_eq!(cfg.right(), [Component::Agents]);
+        assert_eq!(cfg.right(), [Component::Agents, Component::Mode]);
         assert_eq!(cfg.separators(), Separators::Plain);
     }
 
