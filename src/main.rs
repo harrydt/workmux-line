@@ -1,6 +1,7 @@
 mod components;
 mod config;
 mod generate;
+mod theme;
 
 use std::process::ExitCode;
 

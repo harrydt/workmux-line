@@ -2,25 +2,146 @@ use std::path::{Path, PathBuf};
 
 use serde::Deserialize;
 
-#[derive(Debug, Default, Deserialize, PartialEq)]
+use crate::theme::{Colors, Separators};
+
+#[derive(Debug, Deserialize, PartialEq)]
 #[serde(default, deny_unknown_fields)]
 pub struct Config {
+    pub preset: Preset,
+    /// Mirrors workmux's own `nerdfont` setting; off means Unicode fallbacks.
+    pub nerdfont: bool,
+    /// Overrides the preset's separator style.
+    pub separators: Option<Separators>,
     pub sections: Sections,
     pub components: Components,
+    pub colors: Colors,
+}
+
+impl Default for Config {
+    fn default() -> Self {
+        Self {
+            preset: Preset::Developer,
+            nerdfont: true,
+            separators: None,
+            sections: Sections::default(),
+            components: Components::default(),
+            colors: Colors::default(),
+        }
+    }
+}
+
+impl Config {
+    pub fn left(&self) -> &[Component] {
+        self.sections.left.as_deref().unwrap_or(self.preset.left())
+    }
+
+    pub fn right(&self) -> &[Component] {
+        self.sections
+            .right
+            .as_deref()
+            .unwrap_or(self.preset.right())
+    }
+
+    pub fn separators(&self) -> Separators {
+        self.separators.unwrap_or(self.preset.separators())
+    }
+}
+
+#[derive(Debug, Clone, Copy, Deserialize, PartialEq)]
+#[serde(rename_all = "lowercase")]
+pub enum Preset {
+    Minimal,
+    Developer,
+    Powerline,
+}
+
+impl Preset {
+    fn left(self) -> &'static [Component] {
+        match self {
+            Self::Minimal => &[Component::Session],
+            Self::Developer | Self::Powerline => &[Component::Session, Component::Branch],
+        }
+    }
+
+    fn right(self) -> &'static [Component] {
+        match self {
+            Self::Minimal => &[Component::Agents],
+            Self::Developer | Self::Powerline => &[Component::Agents, Component::Clock],
+        }
+    }
+
+    fn separators(self) -> Separators {
+        match self {
+            Self::Minimal => Separators::Plain,
+            Self::Developer => Separators::Round,
+            Self::Powerline => Separators::Powerline,
+        }
+    }
+}
+
+/// Unset sides come from the preset.
+#[derive(Debug, Default, Deserialize, PartialEq)]
+#[serde(default, deny_unknown_fields)]
+pub struct Sections {
+    pub left: Option<Vec<Component>>,
+    pub right: Option<Vec<Component>>,
+}
+
+#[derive(Debug, Clone, Copy, Deserialize, PartialEq)]
+#[serde(rename_all = "lowercase")]
+pub enum Component {
+    Session,
+    Branch,
+    Agents,
+    Clock,
+}
+
+#[derive(Debug, Deserialize, PartialEq)]
+#[serde(default, deny_unknown_fields)]
+pub struct Components {
+    pub session: Width,
+    pub branch: Width,
+    pub agents: Agents,
+    pub clock: Width,
+}
+
+/// Narrow terminals drop the least essential components first.
+impl Default for Components {
+    fn default() -> Self {
+        Self {
+            session: Width::default(),
+            branch: Width { min_width: 90 },
+            agents: Agents::default(),
+            clock: Width { min_width: 80 },
+        }
+    }
+}
+
+impl Components {
+    /// Hide below this client width; 0 means always shown.
+    pub fn min_width(&self, component: Component) -> u16 {
+        match component {
+            Component::Session => self.session.min_width,
+            Component::Branch => self.branch.min_width,
+            Component::Agents => self.agents.min_width,
+            Component::Clock => self.clock.min_width,
+        }
+    }
 }
 
 #[derive(Debug, Default, Deserialize, PartialEq)]
 #[serde(default, deny_unknown_fields)]
-pub struct Components {
-    pub agents: Agents,
+pub struct Width {
+    pub min_width: u16,
 }
 
-/// Must match workmux's `status_icons`; defaults are workmux's defaults.
+/// Icons must match workmux's `status_icons`; defaults are workmux's defaults.
 #[derive(Debug, Deserialize, PartialEq)]
 #[serde(default, deny_unknown_fields)]
 pub struct Agents {
     pub waiting: String,
     pub done: String,
+    pub min_width: u16,
 }
 
 impl Default for Agents {
@@ -28,32 +149,9 @@ impl Default for Agents {
         Self {
             waiting: "💬".into(),
             done: "✅".into(),
+            min_width: 0,
         }
     }
-}
-
-#[derive(Debug, Deserialize, PartialEq)]
-#[serde(default, deny_unknown_fields)]
-pub struct Sections {
-    pub left: Vec<Component>,
-    pub right: Vec<Component>,
-}
-
-impl Default for Sections {
-    fn default() -> Self {
-        Self {
-            left: vec![Component::Session],
-            right: vec![Component::Agents, Component::Clock],
-        }
-    }
-}
-
-#[derive(Debug, Clone, Copy, Deserialize, PartialEq)]
-#[serde(rename_all = "lowercase")]
-pub enum Component {
-    Session,
-    Agents,
-    Clock,
 }
 
 /// `$XDG_CONFIG_HOME/wmux-line/config.toml`, else `~/.config/wmux-line/config.toml`.
@@ -85,6 +183,7 @@ pub fn parse(text: &str) -> Result<Config, String> {
             ));
         }
     }
+    cfg.colors.validate()?;
     Ok(cfg)
 }
 
@@ -98,25 +197,31 @@ mod tests {
     }
 
     #[test]
-    fn partial_sections_keep_other_defaults() {
-        let cfg = parse("[sections]\nright = []").unwrap();
-        assert_eq!(cfg.sections.left, vec![Component::Session]);
-        assert!(cfg.sections.right.is_empty());
+    fn preset_supplies_layout_and_separators() {
+        let cfg = parse("preset = \"minimal\"").unwrap();
+        assert_eq!(cfg.left(), [Component::Session]);
+        assert_eq!(cfg.right(), [Component::Agents]);
+        assert_eq!(cfg.separators(), Separators::Plain);
+    }
+
+    #[test]
+    fn explicit_settings_override_preset() {
+        let cfg = parse("preset = \"minimal\"\nseparators = \"powerline\"\n[sections]\nright = []")
+            .unwrap();
+        assert_eq!(cfg.left(), [Component::Session], "unset side stays preset");
+        assert!(cfg.right().is_empty());
+        assert_eq!(cfg.separators(), Separators::Powerline);
     }
 
     #[test]
     fn unknown_key_is_an_error_naming_the_key() {
-        let err = parse("[sections]\nleft = []\nmiddle = []")
-            .unwrap_err()
-            .to_string();
+        let err = parse("[sections]\nleft = []\nmiddle = []").unwrap_err();
         assert!(err.contains("middle"), "{err}");
     }
 
     #[test]
     fn unknown_component_is_an_error_naming_it() {
-        let err = parse("[sections]\nleft = [\"battery\"]")
-            .unwrap_err()
-            .to_string();
+        let err = parse("[sections]\nleft = [\"battery\"]").unwrap_err();
         assert!(err.contains("battery"), "{err}");
     }
 
@@ -129,6 +234,20 @@ mod tests {
         let err = parse("[components.agents]\ndone = \"\"").unwrap_err();
         assert!(err.contains("components.agents.done"), "{err}");
         assert!(parse("[components.agents]\ndone = \"a\\nb\"").is_err());
+    }
+
+    #[test]
+    fn min_width_defaults_and_override() {
+        let cfg = parse("[components.clock]\nmin_width = 120").unwrap();
+        assert_eq!(cfg.components.min_width(Component::Clock), 120);
+        assert_eq!(cfg.components.min_width(Component::Branch), 90);
+        assert_eq!(cfg.components.min_width(Component::Session), 0);
+    }
+
+    #[test]
+    fn bad_color_is_an_error_naming_it() {
+        let err = parse("[colors]\naccent = \"red,bold\"").unwrap_err();
+        assert!(err.contains("colors.accent"), "{err}");
     }
 
     #[test]

@@ -55,13 +55,18 @@ bind Tab run-shell 'workmux last-agent'
 Optional `~/.config/wmux-line/config.toml`:
 
 ```toml
-preset = "developer"     # minimal | developer | powerline
-icons  = "nerdfont"      # or "unicode"
+preset   = "developer"   # minimal | developer | powerline
+nerdfont = true          # false: plain separators, Unicode icons
 
 [sections]
-left  = ["session", "worktree"]
+left  = ["session", "branch"]
 right = ["agents", "clock"]
+
+[colors]
+accent = "#cba6f7"
 ```
+
+The full schema is in [docs/mvp.md](docs/mvp.md#example-config-the-whole-schema-for-the-mvp).
 
 Run `wmux-line print` to see the exact tmux options it would set.
 
