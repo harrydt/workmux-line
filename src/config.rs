@@ -6,6 +6,30 @@ use serde::Deserialize;
 #[serde(default, deny_unknown_fields)]
 pub struct Config {
     pub sections: Sections,
+    pub components: Components,
+}
+
+#[derive(Debug, Default, Deserialize, PartialEq)]
+#[serde(default, deny_unknown_fields)]
+pub struct Components {
+    pub agents: Agents,
+}
+
+/// Must match workmux's `status_icons`; defaults are workmux's defaults.
+#[derive(Debug, Deserialize, PartialEq)]
+#[serde(default, deny_unknown_fields)]
+pub struct Agents {
+    pub waiting: String,
+    pub done: String,
+}
+
+impl Default for Agents {
+    fn default() -> Self {
+        Self {
+            waiting: "💬".into(),
+            done: "✅".into(),
+        }
+    }
 }
 
 #[derive(Debug, Deserialize, PartialEq)]
@@ -19,7 +43,7 @@ impl Default for Sections {
     fn default() -> Self {
         Self {
             left: vec![Component::Session],
-            right: vec![Component::Clock],
+            right: vec![Component::Agents, Component::Clock],
         }
     }
 }
@@ -28,6 +52,7 @@ impl Default for Sections {
 #[serde(rename_all = "lowercase")]
 pub enum Component {
     Session,
+    Agents,
     Clock,
 }
 
@@ -49,8 +74,18 @@ pub fn load(path: &Path) -> Result<Config, String> {
     }
 }
 
-pub fn parse(text: &str) -> Result<Config, toml::de::Error> {
-    toml::from_str(text)
+pub fn parse(text: &str) -> Result<Config, String> {
+    let cfg: Config = toml::from_str(text).map_err(|e| e.to_string())?;
+    let agents = &cfg.components.agents;
+    for (key, icon) in [("waiting", &agents.waiting), ("done", &agents.done)] {
+        // An empty icon would equal the empty status of every idle window.
+        if icon.is_empty() || icon.chars().any(char::is_control) {
+            return Err(format!(
+                "components.agents.{key}: must be non-empty, without control characters"
+            ));
+        }
+    }
+    Ok(cfg)
 }
 
 #[cfg(test)]
@@ -83,6 +118,17 @@ mod tests {
             .unwrap_err()
             .to_string();
         assert!(err.contains("battery"), "{err}");
+    }
+
+    #[test]
+    fn agent_icons_override_and_validate() {
+        let cfg = parse("[components.agents]\nwaiting = \"W\"").unwrap();
+        assert_eq!(cfg.components.agents.waiting, "W");
+        assert_eq!(cfg.components.agents.done, "✅");
+
+        let err = parse("[components.agents]\ndone = \"\"").unwrap_err();
+        assert!(err.contains("components.agents.done"), "{err}");
+        assert!(parse("[components.agents]\ndone = \"a\\nb\"").is_err());
     }
 
     #[test]
