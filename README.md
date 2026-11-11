@@ -25,9 +25,11 @@ When nothing needs you, the indicator disappears.
 
 - **workmux-first.** It reads what workmux publishes, never re-tracks agents, and
   sends navigation to workmux (`last-done`, `last-agent`, `sidebar next`).
-- **No runtime cost.** workmux-line compiles your config into native tmux formats once.
-  tmux renders them itself and redraws the moment an agent changes state. There's no
-  daemon and no per-refresh process for agent data.
+- **Cheap at runtime.** No daemon, and no process per refresh for agent data:
+  workmux-line compiles your config into native tmux formats once, and tmux evaluates
+  them while drawing the status line (a few milliseconds even with 100 windows). It
+  redraws the moment an agent changes state. The `branch` component is the one
+  exception: a small `git` call, cached by tmux.
 - **Composable.** Left and right sections, reorderable components, themes,
   separators, nerd-font or Unicode icons, and components that hide on narrow
   terminals.
