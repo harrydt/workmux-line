@@ -11,15 +11,13 @@ When you run several workmux agents in parallel, the question you keep asking is
 *"which one needs me?"* workmux already tracks this: each agent window gets a 💬
 (waiting) or ✅ (done) icon that clears when you look at it. That icon only lives in
 the window list of its own session, though. workmux-line gathers it from every session
-into one indicator:
+into one indicator. One agent waiting in another session shows its worktree:
 
-```
- main   auth-refactor                       💬 api-tests    14:32
-```
+![Status line with one agent waiting: 💬 fix-rss](assets/statusline-one.png)
 
-```
- main   auth-refactor                    💬 2  ✅ 1    14:32
-```
+Several show as counts:
+
+![Status line with two agents waiting and one done: 💬 2 ✅ 1](assets/statusline-many.png)
 
 When nothing needs you, the indicator disappears.
 
