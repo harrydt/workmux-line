@@ -1,4 +1,4 @@
-//! End to end: `wmux-line print` sourced into an isolated tmux server, with
+//! End to end: `workmux-line print` sourced into an isolated tmux server, with
 //! workmux simulated by setting `@workmux_status` the way it does.
 //!
 //! Formats are evaluated through a control-mode client (`tmux -C`): unlike a
@@ -23,11 +23,11 @@ impl Tmux {
     fn start(test: &str, config: &str) -> Option<Self> {
         Command::new("tmux").arg("-V").output().ok()?;
         let dir =
-            std::env::temp_dir().join(format!("wmux-line-test-{}-{test}", std::process::id()));
-        std::fs::create_dir_all(dir.join("wmux-line")).unwrap();
-        std::fs::write(dir.join("wmux-line/config.toml"), config).unwrap();
+            std::env::temp_dir().join(format!("workmux-line-test-{}-{test}", std::process::id()));
+        std::fs::create_dir_all(dir.join("workmux-line")).unwrap();
+        std::fs::write(dir.join("workmux-line/config.toml"), config).unwrap();
 
-        let out = Command::new(env!("CARGO_BIN_EXE_wmux-line"))
+        let out = Command::new(env!("CARGO_BIN_EXE_workmux-line"))
             .arg("print")
             .env("XDG_CONFIG_HOME", &dir)
             .output()
@@ -155,12 +155,12 @@ impl Tmux {
         self.eval("#{T:status-right}")
     }
 
-    /// `wmux-line apply` with `config`, finding this server through `$TMUX`
+    /// `workmux-line apply` with `config`, finding this server through `$TMUX`
     /// the way it does under `run-shell`.
     fn apply(&self, config: &str) -> std::process::Output {
-        std::fs::write(self.dir.join("wmux-line/config.toml"), config).unwrap();
+        std::fs::write(self.dir.join("workmux-line/config.toml"), config).unwrap();
         let socket = self.dir.join("sock");
-        Command::new(env!("CARGO_BIN_EXE_wmux-line"))
+        Command::new(env!("CARGO_BIN_EXE_workmux-line"))
             .arg("apply")
             .env("XDG_CONFIG_HOME", &self.dir)
             .env("TMUX", format!("{},0,0", socket.display()))
@@ -382,8 +382,9 @@ fn apply_with_broken_config_leaves_tmux_untouched() {
 
 #[test]
 fn apply_without_a_server_says_so() {
-    let dir = std::env::temp_dir().join(format!("wmux-line-test-{}-noserver", std::process::id()));
-    let out = Command::new(env!("CARGO_BIN_EXE_wmux-line"))
+    let dir =
+        std::env::temp_dir().join(format!("workmux-line-test-{}-noserver", std::process::id()));
+    let out = Command::new(env!("CARGO_BIN_EXE_workmux-line"))
         .arg("apply")
         .env("XDG_CONFIG_HOME", &dir) // no config: defaults
         .env("TMUX", format!("{},0,0", dir.join("sock").display()))
@@ -391,7 +392,7 @@ fn apply_without_a_server_says_so() {
         .unwrap();
     assert!(!out.status.success());
     let err = String::from_utf8_lossy(&out.stderr);
-    assert!(err.starts_with("wmux-line: tmux: "), "{err}");
+    assert!(err.starts_with("workmux-line: tmux: "), "{err}");
 }
 
 #[test]
@@ -399,7 +400,7 @@ fn module_embeds_in_a_foreign_status_line() {
     let mut tmux = start!("module", "statusline = false\n");
     tmux.session("alpha");
     tmux.session("beta");
-    let theirs = "#[fg=red]THEIRS #{E:@wmux_line_agents}| %%";
+    let theirs = "#[fg=red]THEIRS #{E:@workmux_line_agents}| %%";
     run(&tmux.dir, &["set", "-g", "status-right", theirs]);
     assert_eq!(
         tmux.eval("#{status-left}"),

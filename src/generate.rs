@@ -13,16 +13,19 @@ pub fn generate(cfg: &Config) -> String {
     // Always published: the indicator unstyled, empty when nothing is pending.
     let module = components::render(Component::Agents, &g);
     let mut options = vec![
-        ("@wmux_line_waiting", agents.waiting.clone()),
-        ("@wmux_line_done", agents.done.clone()),
-        ("@wmux_line_agents", when(&module.visible, &module.content)),
+        ("@workmux_line_waiting", agents.waiting.clone()),
+        ("@workmux_line_done", agents.done.clone()),
+        (
+            "@workmux_line_agents",
+            when(&module.visible, &module.content),
+        ),
     ];
     if cfg.statusline {
         let mode = &cfg.components.mode;
         let prefix = mode.prefix.clone().unwrap_or_else(|| g.prefix.into());
         options.extend([
-            ("@wmux_line_prefix", prefix),
-            ("@wmux_line_copy", mode.copy.clone()),
+            ("@workmux_line_prefix", prefix),
+            ("@workmux_line_copy", mode.copy.clone()),
             ("status-style", format!("bg={},fg={}", c.bar_bg, c.bar_fg)),
             ("window-status-style", format!("fg={}", c.muted)),
             (
@@ -207,7 +210,7 @@ mod tests {
     #[test]
     fn default_output_sets_every_option_once() {
         let out = generate(&Config::default());
-        assert_eq!(option(&out, "@wmux_line_waiting"), "💬");
+        assert_eq!(option(&out, "@workmux_line_waiting"), "💬");
         assert_eq!(option(&out, "status-style"), "bg=default,fg=default");
         assert_eq!(out.lines().count(), 12);
     }
@@ -221,10 +224,14 @@ mod tests {
         let options: Vec<_> = out.lines().map(|l| l.split(' ').nth(2).unwrap()).collect();
         assert_eq!(
             options,
-            ["@wmux_line_waiting", "@wmux_line_done", "@wmux_line_agents"]
+            [
+                "@workmux_line_waiting",
+                "@workmux_line_done",
+                "@workmux_line_agents"
+            ]
         );
         assert!(
-            !option(&out, "@wmux_line_agents").contains("#["),
+            !option(&out, "@workmux_line_agents").contains("#["),
             "module is unstyled"
         );
     }

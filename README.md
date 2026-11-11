@@ -1,4 +1,4 @@
-# wmux-line
+# workmux-line
 
 A fast, composable tmux statusline for [workmux](https://github.com/raine/workmux)
 users. Think **lualine.nvim meets workmux**.
@@ -12,7 +12,7 @@ users. Think **lualine.nvim meets workmux**.
 When you run several workmux agents in parallel, the question you keep asking is
 *"which one needs me?"* workmux already tracks this: each agent window gets a 💬
 (waiting) or ✅ (done) icon that clears when you look at it. That icon only lives in
-the window list of its own session, though. wmux-line gathers it from every session
+the window list of its own session, though. workmux-line gathers it from every session
 into one indicator:
 
 ```
@@ -29,7 +29,7 @@ When nothing needs you, the indicator disappears.
 
 - **workmux-first.** It reads what workmux publishes, never re-tracks agents, and
   sends navigation to workmux (`last-done`, `last-agent`, `sidebar next`).
-- **No runtime cost.** wmux-line compiles your config into native tmux formats once.
+- **No runtime cost.** workmux-line compiles your config into native tmux formats once.
   tmux renders them itself and redraws the moment an agent changes state. There's no
   daemon and no per-refresh process for agent data.
 - **Composable.** Left and right sections, reorderable components, themes,
@@ -48,7 +48,7 @@ cargo install --path .
 Try it in your running tmux. `apply` loads the status line straight away:
 
 ```sh
-wmux-line apply
+workmux-line apply
 ```
 
 To keep it, add this to your tmux config (`~/.tmux.conf` or
@@ -56,7 +56,7 @@ To keep it, add this to your tmux config (`~/.tmux.conf` or
 **before** the TPM `run-shell` line:
 
 ```tmux
-run-shell 'wmux-line apply'
+run-shell 'workmux-line apply'
 
 # Jump to agents with workmux's own navigation
 bind l   run-shell 'workmux last-done'    # next agent that needs you
@@ -67,19 +67,19 @@ run-shell '~/.tmux/plugins/tpm/tpm'
 ```
 
 Some plugins hook into `status-right` when TPM loads them. tmux-continuum, for
-example, prepends its auto-save job there, so wmux-line has to set it first. For
+example, prepends its auto-save job there, so workmux-line has to set it first. For
 the same reason, re-apply by **reloading your whole tmux config**
-(`tmux source-file <your tmux.conf>`) after changing wmux-line's config. A bare
-`wmux-line apply` would drop those hooks until the next reload.
+(`tmux source-file <your tmux.conf>`) after changing workmux-line's config. A bare
+`workmux-line apply` would drop those hooks until the next reload.
 
-wmux-line sets these tmux options: `status-left`, `status-right` (and their
+workmux-line sets these tmux options: `status-left`, `status-right` (and their
 `-length`), `status-style`, `window-status-style`, `window-status-current-style`,
-and its own `@wmux_line_*`. To go back, remove the line and reload your tmux
+and its own `@workmux_line_*`. To go back, remove the line and reload your tmux
 config.
 
 **Things to know**
 
-- Plugins that inject into `status-right` lose their slot, because wmux-line owns
+- Plugins that inject into `status-right` lose their slot, because workmux-line owns
   that option. The built-in `mode` component replaces tmux-prefix-highlight
   (a keyboard icon while the prefix is held, `COPY` in copy mode), so that plugin can go. To keep your own status line
   instead, use [just the indicator](#use-just-the-indicator).
@@ -92,7 +92,7 @@ config.
 ## Configure
 
 Everything is optional. With no file, you get the `developer` preset.
-`~/.config/wmux-line/config.toml`:
+`~/.config/workmux-line/config.toml`:
 
 ```toml
 preset   = "developer"   # minimal | developer | powerline
@@ -108,7 +108,7 @@ accent = "#cba6f7"
 
 The full schema is in [docs/mvp.md](docs/mvp.md#example-config-the-whole-schema-for-the-mvp).
 
-Run `wmux-line print` to see the exact tmux commands `apply` would run. A config
+Run `workmux-line print` to see the exact tmux commands `apply` would run. A config
 error is reported (with the line and the valid choices), and the status line is
 left unchanged.
 
@@ -121,23 +121,23 @@ oh-my-tmux, …), turn the full line off:
 statusline = false
 ```
 
-`apply` then sets only `@wmux_line_*` options and leaves `status-left`,
+`apply` then sets only `@workmux_line_*` options and leaves `status-left`,
 `status-right` and the styles alone. Embed the indicator wherever you like. It's
 unstyled text, and empty when nothing needs you:
 
 ```tmux
-set -g status-right '#{E:@wmux_line_agents} %H:%M'
+set -g status-right '#{E:@workmux_line_agents} %H:%M'
 # or with padding that disappears with it:
-set -g status-right '#{?#{E:@wmux_line_agents},#[fg=#cba6f7] #{E:@wmux_line_agents} #[default],}%H:%M'
+set -g status-right '#{?#{E:@workmux_line_agents},#[fg=#cba6f7] #{E:@workmux_line_agents} #[default],}%H:%M'
 ```
 
-Run `wmux-line apply` before (or after) your status settings. The order doesn't
+Run `workmux-line apply` before (or after) your status settings. The order doesn't
 matter, because the option is only read when tmux draws the line.
 
 ## Requirements
 
 - tmux 3.2 or newer
-- workmux with status tracking set up (`workmux setup`). Without it, wmux-line still
+- workmux with status tracking set up (`workmux setup`). Without it, workmux-line still
   works, but the agent components stay empty.
 - Linux or macOS
 

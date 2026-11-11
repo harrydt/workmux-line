@@ -6,7 +6,7 @@ mod theme;
 use std::io::Write;
 use std::process::{Command, ExitCode, Stdio};
 
-const USAGE: &str = "usage: wmux-line <apply|print>
+const USAGE: &str = "usage: workmux-line <apply|print>
 
   apply   load the status line into the running tmux server
   print   print the tmux commands apply would run";
@@ -28,7 +28,7 @@ fn main() -> ExitCode {
     match result {
         Ok(()) => ExitCode::SUCCESS,
         Err(e) => {
-            eprintln!("wmux-line: {e}");
+            eprintln!("workmux-line: {e}");
             ExitCode::FAILURE
         }
     }

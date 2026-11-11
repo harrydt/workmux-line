@@ -18,7 +18,7 @@ pub fn render(component: Component, glyphs: &Glyphs) -> Segment {
         },
         Component::Mode => Segment {
             // Labels via options, like the agent icons: no escaping needed.
-            content: "#{?client_prefix,#{@wmux_line_prefix},#{@wmux_line_copy}}".into(),
+            content: "#{?client_prefix,#{@workmux_line_prefix},#{@workmux_line_copy}}".into(),
             visible: Some("#{||:#{client_prefix},#{==:#{pane_mode},copy-mode}}".into()),
         },
         Component::Clock => always("%H:%M"),
@@ -47,8 +47,8 @@ fn branch(icon: &str) -> Segment {
 
 // Icons are compared and shown through tmux options (set by `generate`), never
 // inlined: tmux substitutes option values verbatim, so icons need no escaping.
-const WAITING: &str = "#{==:#{@workmux_status},#{@wmux_line_waiting}}";
-const DONE: &str = "#{==:#{@workmux_status},#{@wmux_line_done}}";
+const WAITING: &str = "#{==:#{@workmux_status},#{@workmux_line_waiting}}";
+const DONE: &str = "#{==:#{@workmux_status},#{@workmux_line_done}}";
 
 fn attention() -> String {
     ["#{||:", WAITING, ",", DONE, "}"].concat()
@@ -67,9 +67,9 @@ fn agents() -> String {
     // names carry workmux's configurable prefix.
     let one = ["#{S:#{W:#{?", &attention, ",#{@workmux_status} #{b:pane_current_path},}}}"].concat();
     let many = [
-        "#{?#{!=:", &waiting, ",0},#{@wmux_line_waiting} ", &waiting, ",}",
+        "#{?#{!=:", &waiting, ",0},#{@workmux_line_waiting} ", &waiting, ",}",
         "#{?#{&&:#{!=:", &waiting, ",0},#{!=:", &done, ",0}}, ,}",
-        "#{?#{!=:", &done, ",0},#{@wmux_line_done} ", &done, ",}",
+        "#{?#{!=:", &done, ",0},#{@workmux_line_done} ", &done, ",}",
     ].concat();
     ["#{?#{==:", &total, ",1},", &one, ",", &many, "}"].concat()
 }

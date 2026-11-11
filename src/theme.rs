@@ -17,7 +17,7 @@ pub struct Colors {
     pub mode: String,
 }
 
-/// The built-in `wmux` theme. The bar is the terminal's own background, so it
+/// The built-in default theme. The bar is the terminal's own background, so it
 /// works on light and dark terminals alike.
 impl Default for Colors {
     fn default() -> Self {

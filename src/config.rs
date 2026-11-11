@@ -10,8 +10,8 @@ pub struct Config {
     pub preset: Preset,
     /// Mirrors workmux's own `nerdfont` setting; off means Unicode fallbacks.
     pub nerdfont: bool,
-    /// Off: leave the status line alone and only publish `@wmux_line_agents`
-    /// for embedding in your own (`#{E:@wmux_line_agents}`).
+    /// Off: leave the status line alone and only publish `@workmux_line_agents`
+    /// for embedding in your own (`#{E:@workmux_line_agents}`).
     pub statusline: bool,
     /// Overrides the preset's separator style.
     pub separators: Option<Separators>,
@@ -185,13 +185,13 @@ impl Default for Mode {
     }
 }
 
-/// `$XDG_CONFIG_HOME/wmux-line/config.toml`, else `~/.config/wmux-line/config.toml`.
+/// `$XDG_CONFIG_HOME/workmux-line/config.toml`, else `~/.config/workmux-line/config.toml`.
 pub fn default_path() -> Option<PathBuf> {
     let base = std::env::var_os("XDG_CONFIG_HOME")
         .filter(|v| !v.is_empty())
         .map(PathBuf::from)
         .or_else(|| std::env::var_os("HOME").map(|h| PathBuf::from(h).join(".config")))?;
-    Some(base.join("wmux-line/config.toml"))
+    Some(base.join("workmux-line/config.toml"))
 }
 
 /// A missing file means defaults; anything else unreadable or invalid is an error.
@@ -291,7 +291,7 @@ mod tests {
 
     #[test]
     fn missing_file_is_default() {
-        let cfg = load(Path::new("/nonexistent/wmux-line/config.toml")).unwrap();
+        let cfg = load(Path::new("/nonexistent/workmux-line/config.toml")).unwrap();
         assert_eq!(cfg, Config::default());
     }
 }
