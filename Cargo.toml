@@ -2,6 +2,12 @@
 name = "workmux-line"
 version = "0.1.0"
 edition = "2024"
+description = "A fast, composable tmux status line for workmux users"
+license = "MIT"
+repository = "https://github.com/harrydt/workmux-line"
+readme = "README.md"
+keywords = ["tmux", "statusline", "workmux"]
+categories = ["command-line-utilities"]
 
 [dependencies]
 serde = { version = "1.0.229", features = ["derive"] }

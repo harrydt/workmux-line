@@ -39,10 +39,10 @@ When nothing needs you, the indicator disappears.
 
 ## Install
 
-From a checkout (no published release yet):
+With Rust installed (no prebuilt binaries yet):
 
 ```sh
-cargo install --path .
+cargo install --git https://github.com/harrydt/workmux-line
 ```
 
 Try it in your running tmux. `apply` loads the status line straight away:
@@ -143,4 +143,4 @@ matter, because the option is only read when tmux draws the line.
 
 ## License
 
-MIT (proposed)
+[MIT](LICENSE)
