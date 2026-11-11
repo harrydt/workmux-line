@@ -3,9 +3,7 @@
 A fast, composable tmux statusline for [workmux](https://github.com/raine/workmux)
 users. Think **lualine.nvim meets workmux**.
 
-> Status: pre-release, MVP milestones 1–4 done. Design notes:
-> [docs/research.md](docs/research.md), [docs/architecture.md](docs/architecture.md),
-> [docs/mvp.md](docs/mvp.md).
+> Status: pre-release.
 
 ## Why
 
@@ -91,22 +89,60 @@ config.
 
 ## Configure
 
-Everything is optional. With no file, you get the `developer` preset.
+Everything is optional. With no file, you get the `developer` preset. Every key in
 `~/.config/workmux-line/config.toml`:
 
 ```toml
-preset   = "developer"   # minimal | developer | powerline
-nerdfont = true          # false: plain separators, Unicode icons
+preset = "developer"          # minimal | developer (default) | powerline
+nerdfont = true               # false: plain separators and Unicode icons
+statusline = true             # false: only publish @workmux_line_agents to embed yourself
+separators = "round"          # overrides the preset: powerline | round | plain
 
-[sections]
+[sections]                    # each side overrides the preset's
 left  = ["session", "branch"]
 right = ["agents", "mode", "clock"]
 
-[colors]
-accent = "#cba6f7"
+[components.agents]
+min_width = 0                 # hide below this client width (0 = never)
+# icons default to workmux's defaults; override only if you changed status_icons
+# waiting = "💬"
+# done    = "✅"
+
+[components.branch]
+min_width = 90                # default
+
+[components.mode]
+prefix = ""                  # default: Nerd Font keyboard (⌨ without one)
+copy = "COPY"                 # default
+
+[components.clock]
+min_width = 80                # default
+
+[colors]                      # any role of the built-in default theme
+accent = "#cba6f7"            # bar_bg bar_fg muted accent a_bg a_fg b_bg b_fg mode
 ```
 
-The full schema is in [docs/mvp.md](docs/mvp.md#example-config-the-whole-schema-for-the-mvp).
+Components:
+
+- `session`: the tmux session name.
+- `branch`: the git branch of the current pane; hidden outside a repository.
+- `agents`: workmux agents waiting for you or done, across all sessions. Shows the
+  worktree name for one, counts for more, nothing when there are none.
+- `mode`: a keyboard icon while the prefix is held, `COPY` in copy mode; hidden
+  otherwise. It has its own colour (`colors.mode`), so appearing never recolours
+  its neighbours.
+- `clock`: `HH:MM`.
+
+Presets:
+
+| Preset | Left | Right | Separators |
+|---|---|---|---|
+| `minimal` | session | agents, mode | plain |
+| `developer` (default) | session, branch | agents, mode, clock | round |
+| `powerline` | session, branch | agents, mode, clock | powerline |
+
+Segment colours follow lualine: the outermost segment on each side uses `a_bg`/`a_fg`,
+the next `b_bg`/`b_fg`, and the rest sit on the bar (`bar_bg`/`bar_fg`).
 
 Run `workmux-line print` to see the exact tmux commands `apply` would run. A config
 error is reported (with the line and the valid choices), and the status line is
